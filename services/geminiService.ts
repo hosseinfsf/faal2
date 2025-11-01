@@ -1,6 +1,8 @@
-
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { FortuneType } from '../types';
+
+// List of AI models to try in order. If the first fails, it will try the second.
+const MODELS_TO_TRY = ['gemini-1.5-flash', 'gemini-1.5-pro'];
 
 const fortuneTypeToPersian = (type: FortuneType): string => {
   switch (type) {
@@ -17,20 +19,20 @@ const fortuneTypeToPersian = (type: FortuneType): string => {
 export const generateFortune = async (type: FortuneType, month?: string): Promise<string> => {
   const API_KEY = process.env.API_KEY;
   if (!API_KEY) {
-    throw new Error("API Key not found.");
+    throw new Error("API Key not found. Ensure the Vercel Environment Variable is named exactly 'API_KEY' and you have redeployed after setting it.");
   }
 
-  const ai = new GoogleGenAI({ apiKey: API_KEY });
+  const ai = new GoogleGenerativeAI(API_KEY);
 
   const persianType = fortuneTypeToPersian(type);
   
-  const systemInstruction = `شما یک فالگیر عرفانی و مدرن به نام "لونا" هستید. شما با استفاده از منابع به‌روز و محبوب، فال‌های شاعرانه، الهام‌بخش و امروزی به زبان فارسی ارائه می‌دهید. قبل از ارائه هر فال، آن را به دقت ویرایش و اصلاح می‌کنید تا متنی روان, دلنشین و مثبت داشته باشد. لحن شما همیشه گرم و دلگرم‌کننده است.`;
+  const systemInstruction = `شما هوش مصنوعی ربات "فال بهتر" هستید. هویت شما دوستانه، صمیمی و بسیار خودمونی است. شما باید فال‌هایی کاملاً به‌روز، دقیق و الهام‌بخش ارائه دهید. مهم: محتوای فال‌ها باید بر اساس اطلاعات و منابعی باشد که در یک هفته اخیر منتشر شده‌اند تا کاملاً تازه و مرتبط با امروز باشند. این فال‌ها باید انگار از بهترین و پربازدیدترین وب‌سایت‌های فال فارسی گرفته شده و سپس توسط شما به شکلی بهتر و امروزی‌تر بازنویسی شده‌اند. لحن شما همیشه گرم و دلگرم‌کننده است.`;
   
   let prompt = `یک فال ${persianType} برای من بگیر.
 این فال باید دقیقاً ۷ خط باشد.
-متن باید ریتم و آهنگ طبیعی و شاعرانه داشته باشد و بسیار امروزی و جذاب باشد.
+متن باید ریتم و آهنگ طبیعی و شاعرانه داشته باشد و بسیار امروزی، جذاب و خودمونی باشد.
 شامل ایموجی‌های مرتبط و زیبا باشد.
-در انتهای فال، قبل از هشتگ‌ها، آیدی ربات یعنی @LunaFaalBot را قرار بده.
+در انتهای فال، قبل از هشتگ‌ها، آیدی ربات یعنی @falbehtarbot و آیدی کانال یعنی @falbehtar را قرار بده.
 سپس حداقل سه هشتگ مرتبط فارسی قرار بده (مثلاً #${persianType}_فال، #فال_امروز).
 `;
 
@@ -44,24 +46,37 @@ export const generateFortune = async (type: FortuneType, month?: string): Promis
     prompt += `این فال تاروت باید بر اساس یکی از کارت‌های تاروت باشد و پیامی عمیق و کاربردی برای زندگی امروز داشته باشد.`;
   }
 
-  try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-      config: {
+  let lastError: unknown = null;
+
+  for (const modelName of MODELS_TO_TRY) {
+    try {
+      console.log(`Attempting to generate fortune with model: ${modelName}`);
+      const model = ai.getGenerativeModel({ 
+        model: modelName,
         systemInstruction: systemInstruction,
-        temperature: 0.85,
-        topP: 0.9,
-      },
-    });
+        generationConfig: {
+          temperature: 0.85,
+          topP: 0.9,
+        },
+      });
 
-    if (!response.text) {
-      throw new Error("Received an empty response from the AI.");
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+
+      if (!text) {
+        throw new Error(`Received an empty response from the AI model ${modelName}.`);
+      }
+
+      // Success!
+      return text;
+    } catch (error) {
+      console.error(`Error generating fortune with model ${modelName}:`, error);
+      lastError = error; // Save the error and try the next model
     }
-
-    return response.text;
-  } catch (error) {
-    console.error("Error generating fortune:", error);
-    throw new Error("Failed to generate fortune from Gemini API.");
   }
+  
+  // If the loop finishes without returning, all models failed.
+  console.error("All models failed to generate a fortune. Last error:", lastError);
+  throw new Error("Failed to generate fortune from Gemini API after trying all fallback models.");
 };

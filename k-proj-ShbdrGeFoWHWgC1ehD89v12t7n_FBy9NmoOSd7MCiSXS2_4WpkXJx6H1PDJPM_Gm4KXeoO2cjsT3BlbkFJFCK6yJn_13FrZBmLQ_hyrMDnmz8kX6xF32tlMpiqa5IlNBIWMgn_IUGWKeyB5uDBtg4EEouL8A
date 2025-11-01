@@ -1,0 +1,10 @@
+[33m7a50650[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m Fix AI service implementation and update dependencies
+[33m50716ed[m Add .vscode/settings.json to .gitignore to prevent committing secrets
+[33m4eb2473[m Add .vscode/settings.json to .gitignore to prevent committing secrets
+[33m44388d5[m Update AI services and project files
+[33mf22a5f7[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m feat: Enhance Gemini's system instruction for relevance
+[33m4e88433[m feat: Rename project and update metadata
+[33m7e389b1[m Create aiClient.ts
+[33m1bd0c91[m feat(fortune): Integrate month selection for seasonal fortunes
+[33mf0a8585[m feat(gemini): Enhance fortune generation prompts
+[33m0581f42[m feat: Initialize Persian Fortune Teller Bot project

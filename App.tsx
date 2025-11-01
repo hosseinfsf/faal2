@@ -8,6 +8,7 @@ import FortuneDisplay from './components/FortuneDisplay';
 import InviteTracker from './components/InviteTracker';
 import MonthSelector from './components/MonthSelector';
 import { DailyIcon, WeeklyIcon, MonthlyIcon, HafezIcon, CoffeeIcon, TarotIcon, LockIcon } from './components/Icons';
+import ChannelPrompt from './components/ChannelPrompt';
 
 type AppState = 'INITIAL' | 'SELECTING_MONTH' | 'LOADING' | 'SHOWING_FORTUNE';
 
@@ -21,6 +22,13 @@ const App: React.FC = () => {
   const INVITES_NEEDED = 3;
   const specialFortunesUnlocked = inviteCount >= INVITES_NEEDED;
 
+  const handleBack = () => {
+    setAppState('INITIAL');
+    setError(null);
+    setSelectedFortuneType(null);
+    setFortune('پیام خوش‌آمد! 🚀\nبرای شروع، یکی از گزینه‌های زیر را انتخاب کنید.');
+  };
+
   const handleGetFortune = useCallback(async (type: FortuneType, month?: string) => {
     setAppState('LOADING');
     setError(null);
@@ -32,7 +40,7 @@ const App: React.FC = () => {
     } catch (err) {
       if (err instanceof Error) {
         if (err.message.includes("API Key not found")) {
-          setError('کلید API یافت نشد. لطفا از تنظیم بودن آن در محیط Vercel اطمینان حاصل کنید.');
+          setError('کلید API یافت نشد. لطفاً مطمئن شوید که در تنظیمات Vercel، نام متغیر دقیقا `API_KEY` است و پس از ذخیره، پروژه را مجددا Deploy کرده‌اید.');
         } else {
           setError('خطا در ارتباط با هوش مصنوعی. لطفا دوباره تلاش کنید.');
         }
@@ -63,12 +71,12 @@ const App: React.FC = () => {
 
   const handleInvite = async () => {
     const inviteLink = window.location.href;
-    const inviteText = `✨ فال روزانه‌ات رو با ربات هوش مصنوعی "لونا" بگیر! ✨\n\nاز طریق این لینک وارد شو:\n${inviteLink}`;
+    const inviteText = `✨ فال روزانه‌ات رو با ربات هوش مصنوعی "فال بهتر" بگیر! ✨\n\nاز طریق این لینک وارد شو:\n${inviteLink}`;
 
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'ربات فال لونا',
+          title: 'ربات فال بهتر',
           text: inviteText,
           url: inviteLink,
         });
@@ -100,32 +108,33 @@ const App: React.FC = () => {
   
   const isLoading = appState === 'LOADING';
 
-  const renderMainContent = () => {
-    switch (appState) {
-      case 'SELECTING_MONTH':
-        return <MonthSelector onSelectMonth={handleMonthSelect} />;
-      case 'INITIAL':
-      case 'LOADING':
-      case 'SHOWING_FORTUNE':
-      default:
-        return <FortuneDisplay fortune={fortune} isLoading={isLoading} error={error} />;
-    }
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-indigo-900 text-white font-sans p-4 flex flex-col items-center">
       <div className="w-full max-w-md mx-auto">
         <Header />
         <main className="mt-8">
           
-          {renderMainContent()}
+          {appState === 'SELECTING_MONTH' ? (
+            <MonthSelector onSelectMonth={handleMonthSelect} onBack={handleBack} />
+          ) : (
+            <FortuneDisplay fortune={fortune} isLoading={isLoading} error={error} />
+          )}
+
+          {error && appState === 'SHOWING_FORTUNE' && (
+             <button
+                onClick={handleBack}
+                className="w-full mt-4 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+              >
+                بازگشت
+              </button>
+          )}
           
           <div className="grid grid-cols-2 gap-4 mt-8">
             {fortuneButtons.map(({ type, label, icon, locked }) => (
               <FortuneButton
                 key={type}
                 onClick={() => handleFortuneTypeSelect(type)}
-                disabled={locked || isLoading || appState === 'SELECTING_MONTH'}
+                disabled={locked || isLoading || appState === 'SELECTING_MONTH' || (error && appState === 'SHOWING_FORTUNE')}
               >
                 {icon}
                 <span>{label}</span>
@@ -138,6 +147,7 @@ const App: React.FC = () => {
             invitesNeeded={INVITES_NEEDED} 
             onInvite={handleInvite} 
           />
+          <ChannelPrompt />
         </main>
       </div>
     </div>

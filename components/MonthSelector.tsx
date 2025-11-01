@@ -3,6 +3,7 @@ import React from 'react';
 
 interface MonthSelectorProps {
   onSelectMonth: (month: string) => void;
+  onBack: () => void;
 }
 
 const months = [
@@ -20,7 +21,7 @@ const months = [
   { name: 'اسفند', emoji: '🐟' },
 ];
 
-const MonthSelector: React.FC<MonthSelectorProps> = ({ onSelectMonth }) => {
+const MonthSelector: React.FC<MonthSelectorProps> = ({ onSelectMonth, onBack }) => {
   return (
     <div className="min-h-[250px] p-6 rounded-2xl border border-white/20 bg-black/20 backdrop-blur-sm flex flex-col items-center justify-center">
       <h3 className="text-xl font-bold mb-4 text-indigo-200">ماه مورد نظر خود را انتخاب کنید</h3>
@@ -36,6 +37,12 @@ const MonthSelector: React.FC<MonthSelectorProps> = ({ onSelectMonth }) => {
           </button>
         ))}
       </div>
+       <button
+        onClick={onBack}
+        className="w-full mt-4 bg-gray-600/50 hover:bg-gray-500/50 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+      >
+        بازگشت
+      </button>
     </div>
   );
 };

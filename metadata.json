@@ -1,5 +1,5 @@
 {
-  "name": "Persian Fortune Teller Bot",
+  "name": "Fal Behtar Bot",
   "description": "A web application that simulates a Telegram bot for generating various types of Persian fortunes (Faal) using AI. It features a mystical UI, different fortune categories, and a user invite system to unlock special fortunes.",
   "requestFramePermissions": []
 }

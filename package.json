@@ -1,5 +1,5 @@
 {
-  "name": "persian-fortune-teller-bot",
+  "name": "fal-behtar-bot",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@google/genai": "^1.28.0",
+    "@google/generative-ai": "^0.24.1",
+    "openai": "^6.7.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },
