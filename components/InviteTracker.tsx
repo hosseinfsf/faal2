@@ -37,7 +37,7 @@ const InviteTracker: React.FC<InviteTrackerProps> = ({ inviteCount, invitesNeede
             onClick={onInvite}
             className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg transition-colors"
           >
-            دعوت از یک دوست (شبیه‌سازی)
+            دریافت لینک دعوت
           </button>
         </>
       )}

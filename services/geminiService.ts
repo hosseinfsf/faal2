@@ -1,3 +1,4 @@
+
 import { GoogleGenAI } from "@google/genai";
 import { FortuneType } from '../types';
 
@@ -13,7 +14,7 @@ const fortuneTypeToPersian = (type: FortuneType): string => {
   }
 };
 
-export const generateFortune = async (type: FortuneType): Promise<string> => {
+export const generateFortune = async (type: FortuneType, month?: string): Promise<string> => {
   const API_KEY = process.env.API_KEY;
   if (!API_KEY) {
     throw new Error("API Key not found.");
@@ -29,11 +30,12 @@ export const generateFortune = async (type: FortuneType): Promise<string> => {
 این فال باید دقیقاً ۷ خط باشد.
 متن باید ریتم و آهنگ طبیعی و شاعرانه داشته باشد و بسیار امروزی و جذاب باشد.
 شامل ایموجی‌های مرتبط و زیبا باشد.
-در انتهای آن حداقل سه هشتگ مرتبط فارسی قرار داشته باشد (مثلاً #${persianType}_فال، #فال_امروز).
+در انتهای فال، قبل از هشتگ‌ها، آیدی ربات یعنی @LunaFaalBot را قرار بده.
+سپس حداقل سه هشتگ مرتبط فارسی قرار بده (مثلاً #${persianType}_فال، #فال_امروز).
 `;
 
   if (type === FortuneType.Daily || type === FortuneType.Weekly || type === FortuneType.Monthly) {
-    prompt += `در فال خود به یکی از ماه‌های فارسی (فروردین 🌷، اردیبهشت 🌸، خرداد ☀️، تیر 🔥، مرداد 🦁، شهریور 🌾، مهر 🍂، آبان 💧، آذر 🔥، دی ❄️، بهمن 💨، اسفند 🐟) اشاره کن و حس و حال آن ماه را در متن بگنجان.`;
+    prompt += `این فال باید مخصوص ماه "${month}" باشد و حس و حال آن ماه را در متن بگنجان.`;
   } else if (type === FortuneType.Hafez) {
     prompt += `این فال حافظ باید تفسیری مدرن و کاربردی از یکی از غزل‌های حافظ باشد.`;
   } else if (type === FortuneType.Coffee) {
