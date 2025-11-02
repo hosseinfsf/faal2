@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from 'react';
 import { FortuneType } from './types';
 import { generateFortune } from './services/geminiService';
@@ -38,9 +37,19 @@ const App: React.FC = () => {
       setFortune(result);
       setAppState('SHOWING_FORTUNE');
     } catch (err) {
+      console.error("Error getting fortune:", err);
       if (err instanceof Error) {
-        if (err.message.includes("API Key not found")) {
+        const errorMessage = err.message.toLowerCase();
+        if (errorMessage.includes("api key not found")) {
           setError('کلید API یافت نشد. لطفاً مطمئن شوید که در تنظیمات Vercel، نام متغیر دقیقا `API_KEY` است و پس از ذخیره، پروژه را مجددا Deploy کرده‌اید.');
+        } else if (errorMessage.includes("api_key_invalid") || (errorMessage.includes("invalid") && errorMessage.includes("api key"))) {
+          setError('کلید API شما معتبر نیست. لطفاً یک کلید API معتبر از Google AI Studio دریافت کرده و در تنظیمات Vercel قرار دهید.');
+        } else if (errorMessage.includes("quota")) {
+          setError('محدودیت استفاده از API به پایان رسیده است. لطفاً بعداً دوباره تلاش کنید یا حساب خود را بررسی کنید.');
+        } else if (errorMessage.includes("billing")) {
+          setError('مشکلی در حساب کاربری شما وجود دارد (احتمالاً مربوط به پرداخت). لطفاً تنظیمات حساب Google Cloud خود را بررسی کنید.');
+        } else if (errorMessage.includes("safety") || errorMessage.includes("blocked")) {
+          setError('پاسخ هوش مصنوعی به دلیل محدودیت‌های ایمنی مسدود شد. لطفاً درخواست خود را تغییر داده و دوباره تلاش کنید.');
         } else {
           setError('خطا در ارتباط با هوش مصنوعی. لطفا دوباره تلاش کنید.');
         }
@@ -48,7 +57,6 @@ const App: React.FC = () => {
         setError('یک خطای ناشناخته رخ داد. لطفا دوباره تلاش کنید.');
       }
       setAppState('SHOWING_FORTUNE'); // Show the error in the display
-      console.error(err);
     }
   }, []);
 

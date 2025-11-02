@@ -75,5 +75,9 @@ export const generateFortune = async (type: FortuneType, month?: string): Promis
   
   // If the loop finishes without returning, all models failed.
   console.error("All models failed to generate a fortune. Last error:", lastError);
+  if (lastError) {
+    throw lastError; // Re-throw the actual error for better debugging in the UI component
+  }
+  
   throw new Error("Failed to generate fortune from Gemini API after trying all fallback models.");
 };
