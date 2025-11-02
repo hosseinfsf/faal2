@@ -6,9 +6,10 @@ interface FortuneDisplayProps {
   fortune: string | null;
   isLoading: boolean;
   error: string | null;
+  imageUrl?: string | null;
 }
 
-const FortuneDisplay: React.FC<FortuneDisplayProps> = ({ fortune, isLoading, error }) => {
+const FortuneDisplay: React.FC<FortuneDisplayProps> = ({ fortune, isLoading, error, imageUrl }) => {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -19,8 +20,9 @@ const FortuneDisplay: React.FC<FortuneDisplayProps> = ({ fortune, isLoading, err
   }, [copied]);
 
   const handleCopy = () => {
-    if (fortune) {
-      navigator.clipboard.writeText(fortune);
+    const textToCopy = imageUrl ? `${fortune}\n\n(این فال تصویری با هوش مصنوعی ساخته شده است)` : fortune;
+    if (textToCopy) {
+      navigator.clipboard.writeText(textToCopy);
       setCopied(true);
     }
   };
@@ -37,10 +39,17 @@ const FortuneDisplay: React.FC<FortuneDisplayProps> = ({ fortune, isLoading, err
     if (error) {
       return <p className="text-red-400 text-center">{error}</p>;
     }
-    if (fortune) {
+    if (imageUrl || fortune) {
       return (
-        <div className="whitespace-pre-line text-center leading-loose text-lg text-indigo-100">
-          {fortune}
+        <div className="flex flex-col items-center gap-4 w-full">
+          {imageUrl && (
+            <img src={imageUrl} alt="فال تصویری" className="rounded-lg shadow-lg max-w-full h-auto" />
+          )}
+          {fortune && (
+            <div className="whitespace-pre-line text-center leading-loose text-lg text-indigo-100">
+              {fortune}
+            </div>
+          )}
         </div>
       );
     }

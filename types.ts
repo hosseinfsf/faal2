@@ -6,4 +6,5 @@ export enum FortuneType {
   Hafez = 'Hafez',
   Coffee = 'Coffee',
   Tarot = 'Tarot',
+  Visual = 'Visual',
 }

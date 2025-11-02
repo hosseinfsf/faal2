@@ -1,18 +1,21 @@
+
 import React, { useState, useCallback } from 'react';
 import { FortuneType } from './types';
-import { generateFortune } from './services/geminiService';
+import { generateFortune, generateImageFortune } from './services/geminiService';
 import Header from './components/Header';
 import FortuneButton from './components/FortuneButton';
 import FortuneDisplay from './components/FortuneDisplay';
 import InviteTracker from './components/InviteTracker';
 import MonthSelector from './components/MonthSelector';
-import { DailyIcon, WeeklyIcon, MonthlyIcon, HafezIcon, CoffeeIcon, TarotIcon, LockIcon } from './components/Icons';
+import { DailyIcon, WeeklyIcon, MonthlyIcon, HafezIcon, CoffeeIcon, TarotIcon, LockIcon, VisualIcon } from './components/Icons';
 import ChannelPrompt from './components/ChannelPrompt';
+import VisualFortuneInput from './components/VisualFortuneInput';
 
-type AppState = 'INITIAL' | 'SELECTING_MONTH' | 'LOADING' | 'SHOWING_FORTUNE';
+type AppState = 'INITIAL' | 'SELECTING_MONTH' | 'AWAITING_VISUAL_INTENTION' | 'LOADING' | 'SHOWING_FORTUNE';
 
 const App: React.FC = () => {
   const [fortune, setFortune] = useState<string | null>('پیام خوش‌آمد! 🚀\nبرای شروع، یکی از گزینه‌های زیر را انتخاب کنید.');
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [inviteCount, setInviteCount] = useState<number>(0);
   const [appState, setAppState] = useState<AppState>('INITIAL');
@@ -24,40 +27,63 @@ const App: React.FC = () => {
   const handleBack = () => {
     setAppState('INITIAL');
     setError(null);
+    setImageUrl(null);
     setSelectedFortuneType(null);
     setFortune('پیام خوش‌آمد! 🚀\nبرای شروع، یکی از گزینه‌های زیر را انتخاب کنید.');
   };
+  
+  const handleApiError = (err: unknown) => {
+    console.error("Error with AI Service:", err);
+    if (err instanceof Error) {
+      const errorMessage = err.message.toLowerCase();
+      if (errorMessage.includes("api key not found")) {
+        setError('کلید API یافت نشد. لطفاً مطمئن شوید که در تنظیمات Vercel، نام متغیر دقیقا `API_KEY` است و پس از ذخیره، پروژه را مجددا Deploy کرده‌اید.');
+      } else if (errorMessage.includes("api_key_invalid") || (errorMessage.includes("invalid") && errorMessage.includes("api key"))) {
+        setError('کلید API شما معتبر نیست. لطفاً یک کلید API معتبر از Google AI Studio دریافت کرده و در تنظیمات Vercel قرار دهید.');
+      } else if (errorMessage.includes("quota")) {
+        setError('محدودیت استفاده از API به پایان رسیده است. لطفاً بعداً دوباره تلاش کنید یا حساب خود را بررسی کنید.');
+      } else if (errorMessage.includes("billing")) {
+        setError('مشکلی در حساب کاربری شما وجود دارد (احتمالاً مربوط به پرداخت). لطفاً تنظیمات حساب Google Cloud خود را بررسی کنید.');
+      } else if (errorMessage.includes("safety") || errorMessage.includes("blocked")) {
+        setError('پاسخ هوش مصنوعی به دلیل محدودیت‌های ایمنی مسدود شد. لطفاً درخواست خود را تغییر داده و دوباره تلاش کنید.');
+      } else {
+        setError('خطا در ارتباط با هوش مصنوعی. لطفا دوباره تلاش کنید.');
+      }
+    } else {
+      setError('یک خطای ناشناخته رخ داد. لطفا دوباره تلاش کنید.');
+    }
+  };
 
-  const handleGetFortune = useCallback(async (type: FortuneType, month?: string) => {
+  const handleGetTextFortune = useCallback(async (type: FortuneType, details?: string) => {
     setAppState('LOADING');
     setError(null);
     setFortune(null);
+    setImageUrl(null);
     try {
-      const result = await generateFortune(type, month);
+      const result = await generateFortune(type, details);
       setFortune(result);
-      setAppState('SHOWING_FORTUNE');
     } catch (err) {
-      console.error("Error getting fortune:", err);
-      if (err instanceof Error) {
-        const errorMessage = err.message.toLowerCase();
-        if (errorMessage.includes("api key not found")) {
-          setError('کلید API یافت نشد. لطفاً مطمئن شوید که در تنظیمات Vercel، نام متغیر دقیقا `API_KEY` است و پس از ذخیره، پروژه را مجددا Deploy کرده‌اید.');
-        } else if (errorMessage.includes("api_key_invalid") || (errorMessage.includes("invalid") && errorMessage.includes("api key"))) {
-          setError('کلید API شما معتبر نیست. لطفاً یک کلید API معتبر از Google AI Studio دریافت کرده و در تنظیمات Vercel قرار دهید.');
-        } else if (errorMessage.includes("quota")) {
-          setError('محدودیت استفاده از API به پایان رسیده است. لطفاً بعداً دوباره تلاش کنید یا حساب خود را بررسی کنید.');
-        } else if (errorMessage.includes("billing")) {
-          setError('مشکلی در حساب کاربری شما وجود دارد (احتمالاً مربوط به پرداخت). لطفاً تنظیمات حساب Google Cloud خود را بررسی کنید.');
-        } else if (errorMessage.includes("safety") || errorMessage.includes("blocked")) {
-          setError('پاسخ هوش مصنوعی به دلیل محدودیت‌های ایمنی مسدود شد. لطفاً درخواست خود را تغییر داده و دوباره تلاش کنید.');
-        } else {
-          setError('خطا در ارتباط با هوش مصنوعی. لطفا دوباره تلاش کنید.');
-        }
-      } else {
-        setError('یک خطای ناشناخته رخ داد. لطفا دوباره تلاش کنید.');
-      }
-      setAppState('SHOWING_FORTUNE'); // Show the error in the display
+      handleApiError(err);
     }
+    setAppState('SHOWING_FORTUNE');
+  }, []);
+  
+  const handleGenerateVisualFortune = useCallback(async (intention: string) => {
+    setAppState('LOADING');
+    setError(null);
+    setFortune(null);
+    setImageUrl(null);
+    try {
+        const [imageResult, textResult] = await Promise.all([
+            generateImageFortune(intention),
+            generateFortune(FortuneType.Visual, intention)
+        ]);
+        setImageUrl(imageResult);
+        setFortune(textResult);
+    } catch (err) {
+        handleApiError(err);
+    }
+    setAppState('SHOWING_FORTUNE');
   }, []);
 
   const handleFortuneTypeSelect = (type: FortuneType) => {
@@ -65,17 +91,19 @@ const App: React.FC = () => {
     if (isTemporal) {
       setSelectedFortuneType(type);
       setAppState('SELECTING_MONTH');
+    } else if (type === FortuneType.Visual) {
+        setSelectedFortuneType(type);
+        setAppState('AWAITING_VISUAL_INTENTION');
     } else {
-      handleGetFortune(type);
+      handleGetTextFortune(type);
     }
   };
 
   const handleMonthSelect = (month: string) => {
     if (selectedFortuneType) {
-      handleGetFortune(selectedFortuneType, month);
+      handleGetTextFortune(selectedFortuneType, month);
     }
   };
-
 
   const handleInvite = async () => {
     const inviteLink = window.location.href;
@@ -95,7 +123,6 @@ const App: React.FC = () => {
         console.error('خطا در اشتراک‌گذاری:', error);
       }
     } else {
-      // Fallback for browsers that don't support navigator.share
       navigator.clipboard.writeText(inviteLink).then(() => {
         alert('لینک دعوت در کلیپ‌بورد شما کپی شد. آن را برای دوستانتان ارسال کنید!');
         if (inviteCount < INVITES_NEEDED) {
@@ -110,11 +137,26 @@ const App: React.FC = () => {
     { type: FortuneType.Weekly, label: 'فال هفتگی', icon: <WeeklyIcon /> },
     { type: FortuneType.Monthly, label: 'فال ماهانه', icon: <MonthlyIcon /> },
     { type: FortuneType.Hafez, label: 'فال حافظ', icon: <HafezIcon /> },
+    { type: FortuneType.Visual, label: 'فال تصویری', icon: <VisualIcon /> },
     { type: FortuneType.Coffee, label: 'فال قهوه', icon: specialFortunesUnlocked ? <CoffeeIcon /> : <LockIcon />, locked: !specialFortunesUnlocked },
     { type: FortuneType.Tarot, label: 'فال تاروت', icon: specialFortunesUnlocked ? <TarotIcon /> : <LockIcon />, locked: !specialFortunesUnlocked },
   ];
   
   const isLoading = appState === 'LOADING';
+
+  const renderMainContent = () => {
+    switch(appState) {
+        case 'SELECTING_MONTH':
+            return <MonthSelector onSelectMonth={handleMonthSelect} onBack={handleBack} />;
+        case 'AWAITING_VISUAL_INTENTION':
+            return <VisualFortuneInput onSubmit={handleGenerateVisualFortune} onBack={handleBack} isLoading={isLoading} />;
+        case 'INITIAL':
+        case 'LOADING':
+        case 'SHOWING_FORTUNE':
+        default:
+            return <FortuneDisplay fortune={fortune} isLoading={isLoading} error={error} imageUrl={imageUrl} />;
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-indigo-900 text-white font-sans p-4 flex flex-col items-center">
@@ -122,11 +164,7 @@ const App: React.FC = () => {
         <Header />
         <main className="mt-8">
           
-          {appState === 'SELECTING_MONTH' ? (
-            <MonthSelector onSelectMonth={handleMonthSelect} onBack={handleBack} />
-          ) : (
-            <FortuneDisplay fortune={fortune} isLoading={isLoading} error={error} />
-          )}
+          {renderMainContent()}
 
           {error && appState === 'SHOWING_FORTUNE' && (
              <button
@@ -142,7 +180,7 @@ const App: React.FC = () => {
               <FortuneButton
                 key={type}
                 onClick={() => handleFortuneTypeSelect(type)}
-                disabled={locked || isLoading || appState === 'SELECTING_MONTH' || (error && appState === 'SHOWING_FORTUNE')}
+                disabled={locked || isLoading || appState === 'SELECTING_MONTH' || appState === 'AWAITING_VISUAL_INTENTION' || (error && appState === 'SHOWING_FORTUNE')}
               >
                 {icon}
                 <span>{label}</span>
