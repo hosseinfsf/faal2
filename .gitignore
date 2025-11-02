@@ -22,9 +22,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
-# Docusaurus cache and generated files
-.docusaurus
-
-# VSCode settings with potential secrets
-.vscode/settings.json

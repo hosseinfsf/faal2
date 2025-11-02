@@ -1,8 +1,8 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 import { FortuneType } from '../types';
 
 // List of AI models to try in order. If the first fails, it will try the second.
-const MODELS_TO_TRY = ['gemini-1.5-flash', 'gemini-1.5-pro'];
+const MODELS_TO_TRY = ['gemini-2.5-flash', 'gemini-2.5-pro'];
 
 const fortuneTypeToPersian = (type: FortuneType): string => {
   switch (type) {
@@ -22,7 +22,7 @@ export const generateFortune = async (type: FortuneType, month?: string): Promis
     throw new Error("API Key not found. Ensure the Vercel Environment Variable is named exactly 'API_KEY' and you have redeployed after setting it.");
   }
 
-  const ai = new GoogleGenerativeAI(API_KEY);
+  const ai = new GoogleGenAI({ apiKey: API_KEY });
 
   const persianType = fortuneTypeToPersian(type);
   
@@ -51,25 +51,22 @@ export const generateFortune = async (type: FortuneType, month?: string): Promis
   for (const modelName of MODELS_TO_TRY) {
     try {
       console.log(`Attempting to generate fortune with model: ${modelName}`);
-      const model = ai.getGenerativeModel({ 
+      const response = await ai.models.generateContent({
         model: modelName,
-        systemInstruction: systemInstruction,
-        generationConfig: {
+        contents: prompt,
+        config: {
+          systemInstruction: systemInstruction,
           temperature: 0.85,
           topP: 0.9,
         },
       });
 
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      const text = response.text();
-
-      if (!text) {
+      if (!response.text) {
         throw new Error(`Received an empty response from the AI model ${modelName}.`);
       }
 
       // Success!
-      return text;
+      return response.text;
     } catch (error) {
       console.error(`Error generating fortune with model ${modelName}:`, error);
       lastError = error; // Save the error and try the next model
