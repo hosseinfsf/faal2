@@ -7,7 +7,7 @@ import FortuneButton from './components/FortuneButton';
 import FortuneDisplay from './components/FortuneDisplay';
 import InviteTracker from './components/InviteTracker';
 import MonthSelector from './components/MonthSelector';
-import { DailyIcon, WeeklyIcon, MonthlyIcon, HafezIcon, CoffeeIcon, TarotIcon, LockIcon, VisualIcon } from './components/Icons';
+import { DailyIcon, WeeklyIcon, MonthlyIcon, HafezIcon, CoffeeIcon, TarotIcon, LockIcon, VisualIcon, BirthMonthIcon, IstikharaIcon, AnbiyaIcon } from './components/Icons';
 import ChannelPrompt from './components/ChannelPrompt';
 import VisualFortuneInput from './components/VisualFortuneInput';
 
@@ -20,6 +20,7 @@ const App: React.FC = () => {
   const [inviteCount, setInviteCount] = useState<number>(0);
   const [appState, setAppState] = useState<AppState>('INITIAL');
   const [selectedFortuneType, setSelectedFortuneType] = useState<FortuneType | null>(null);
+  const [monthSelectorTitle, setMonthSelectorTitle] = useState<string>('');
 
   const INVITES_NEEDED = 3;
   const specialFortunesUnlocked = inviteCount >= INVITES_NEEDED;
@@ -87,9 +88,11 @@ const App: React.FC = () => {
   }, []);
 
   const handleFortuneTypeSelect = (type: FortuneType) => {
-    const isTemporal = type === FortuneType.Daily || type === FortuneType.Weekly || type === FortuneType.Monthly;
-    if (isTemporal) {
+    const needsMonthSelection = [FortuneType.Daily, FortuneType.Weekly, FortuneType.Monthly, FortuneType.BirthMonth].includes(type);
+
+    if (needsMonthSelection) {
       setSelectedFortuneType(type);
+      setMonthSelectorTitle(type === FortuneType.BirthMonth ? 'ماه تولد خود را انتخاب کنید' : 'ماه مورد نظر خود را انتخاب کنید');
       setAppState('SELECTING_MONTH');
     } else if (type === FortuneType.Visual) {
         setSelectedFortuneType(type);
@@ -136,7 +139,10 @@ const App: React.FC = () => {
     { type: FortuneType.Daily, label: 'فال روزانه', icon: <DailyIcon /> },
     { type: FortuneType.Weekly, label: 'فال هفتگی', icon: <WeeklyIcon /> },
     { type: FortuneType.Monthly, label: 'فال ماهانه', icon: <MonthlyIcon /> },
+    { type: FortuneType.BirthMonth, label: 'فال ماه تولد', icon: <BirthMonthIcon /> },
     { type: FortuneType.Hafez, label: 'فال حافظ', icon: <HafezIcon /> },
+    { type: FortuneType.Anbiya, label: 'فال انبیاء', icon: <AnbiyaIcon /> },
+    { type: FortuneType.Istikhara, label: 'استخاره با قرآن', icon: <IstikharaIcon /> },
     { type: FortuneType.Visual, label: 'فال تصویری', icon: <VisualIcon /> },
     { type: FortuneType.Coffee, label: 'فال قهوه', icon: specialFortunesUnlocked ? <CoffeeIcon /> : <LockIcon />, locked: !specialFortunesUnlocked },
     { type: FortuneType.Tarot, label: 'فال تاروت', icon: specialFortunesUnlocked ? <TarotIcon /> : <LockIcon />, locked: !specialFortunesUnlocked },
@@ -147,7 +153,7 @@ const App: React.FC = () => {
   const renderMainContent = () => {
     switch(appState) {
         case 'SELECTING_MONTH':
-            return <MonthSelector onSelectMonth={handleMonthSelect} onBack={handleBack} />;
+            return <MonthSelector onSelectMonth={handleMonthSelect} onBack={handleBack} title={monthSelectorTitle} />;
         case 'AWAITING_VISUAL_INTENTION':
             return <VisualFortuneInput onSubmit={handleGenerateVisualFortune} onBack={handleBack} isLoading={isLoading} />;
         case 'INITIAL':

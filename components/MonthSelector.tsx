@@ -4,6 +4,7 @@ import React from 'react';
 interface MonthSelectorProps {
   onSelectMonth: (month: string) => void;
   onBack: () => void;
+  title: string;
 }
 
 const months = [
@@ -21,10 +22,10 @@ const months = [
   { name: 'اسفند', emoji: '🐟' },
 ];
 
-const MonthSelector: React.FC<MonthSelectorProps> = ({ onSelectMonth, onBack }) => {
+const MonthSelector: React.FC<MonthSelectorProps> = ({ onSelectMonth, onBack, title }) => {
   return (
     <div className="min-h-[250px] p-6 rounded-2xl border border-white/20 bg-black/20 backdrop-blur-sm flex flex-col items-center justify-center">
-      <h3 className="text-xl font-bold mb-4 text-indigo-200">ماه مورد نظر خود را انتخاب کنید</h3>
+      <h3 className="text-xl font-bold mb-4 text-indigo-200">{title}</h3>
       <div className="grid grid-cols-3 gap-3 w-full">
         {months.map((month) => (
           <button
