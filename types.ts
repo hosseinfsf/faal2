@@ -1,12 +1,4 @@
 export enum FortuneType {
-  Daily = 'Daily',
-  Weekly = 'Weekly',
-  Monthly = 'Monthly',
   Hafez = 'Hafez',
-  Coffee = 'Coffee',
   Tarot = 'Tarot',
-  Visual = 'Visual',
-  BirthMonth = 'BirthMonth',
-  Istikhara = 'Istikhara',
-  Anbiya = 'Anbiya',
 }
