@@ -1,53 +1,54 @@
-
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { FortuneType } from './types';
-import { generateFortune } from './services/geminiService';
+import React, { useState, useEffect, useRef } from 'react';
+import { sendMessageToBot } from './services/geminiService';
 
 interface Message {
-  // FIX: Allow id to be a string as well to support the 'loader' id.
-  id: number | string;
-  text: string | React.ReactNode;
-  sender: 'bot';
+  id: number;
+  text: string;
+  sender: 'bot' | 'user';
 }
 
-interface Button {
-    text: string;
-    action: () => void;
-}
+const ChatMessage: React.FC<{ message: Message }> = ({ message }) => {
+  const isBot = message.sender === 'bot';
+  
+  // Format text to handle basic newlines
+  const formattedText = message.text.split('\n').map((line, i) => (
+    <React.Fragment key={i}>
+      {line}
+      {i < message.text.split('\n').length - 1 && <br />}
+    </React.Fragment>
+  ));
 
-const ChatMessage: React.FC<{ message: Message }> = ({ message }) => (
-  <div className="message-bubble bot-bubble">
-    {message.text}
-  </div>
-);
-
-const InlineKeyboard: React.FC<{ buttons: Button[][], disabled: boolean }> = ({ buttons, disabled }) => (
-  <div className="inline-keyboard">
-    {buttons.map((row, rowIndex) => (
-      <div key={rowIndex} className="flex gap-2 w-full">
-        {row.map((button) => (
-          <button key={button.text} onClick={button.action} disabled={disabled} className="inline-button flex-1">
-            {button.text}
-          </button>
-        ))}
-      </div>
-    ))}
-  </div>
-);
+  return (
+    <div className={`message-bubble ${isBot ? 'bot-bubble' : 'user-bubble'}`}>
+      {formattedText}
+      {/* Time placeholder could go here */}
+    </div>
+  );
+};
 
 const Loader: React.FC = () => (
   <div className="loader">
-    <span>در حال آماده‌سازی</span>
-    <div className="dot-flashing"></div>
+    <div className="dot"></div>
+    <div className="dot"></div>
+    <div className="dot"></div>
   </div>
+);
+
+// Telegram-style Send Icon
+const SendIcon = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 transform rotate-0">
+    <path d="M22 2L11 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+    <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+  </svg>
 );
 
 const App: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [showButtons, setShowButtons] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -55,58 +56,102 @@ const App: React.FC = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages, isLoading]);
-  
+
   useEffect(() => {
+    // Initial friendly greeting
     setMessages([{
       id: 1,
       sender: 'bot',
-      text: 'سلام! به ربات فال حافظ و تاروت خوش آمدید ✨\n\nلطفاً نوع فال خود را انتخاب کنید:'
+      text: 'سلام! 👋\nمن دستیار هوشمند شخصی شما هستم. چطور می‌تونم امروز کمکتون کنم؟'
     }]);
-  }, []);
-
-  const handleFortuneRequest = useCallback(async (type: FortuneType) => {
-    setShowButtons(false);
-    setIsLoading(true);
-
-    try {
-      const result = await generateFortune(type);
-      setMessages(prev => [...prev, { id: Date.now(), sender: 'bot', text: result }]);
-    } catch (e: any) {
-      const errorMessage = e.message || 'خطایی در دریافت فال رخ داد. لطفاً دوباره تلاش کنید.';
-      setMessages(prev => [...prev, { id: Date.now(), sender: 'bot', text: `😕 اوه! مشکلی پیش آمد:\n\n${errorMessage}` }]);
-    } finally {
-      setIsLoading(false);
+    
+    // Focus input on load
+    if(!('ontouchstart' in window)) { // Only focus on desktop to avoid keyboard popping up on mobile
+       inputRef.current?.focus();
     }
   }, []);
 
-  const resetChat = () => {
-    setMessages([{
-      id: 1,
-      sender: 'bot',
-      text: '✨ برای گرفتن فال جدید، یکی از گزینه‌های زیر را انتخاب کنید:'
-    }]);
-    setShowButtons(true);
+  const handleSend = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    
+    if (!input.trim() || isLoading) return;
+
+    const userText = input.trim();
+    setInput('');
+    
+    // Reset textarea height
+    if (inputRef.current) {
+        inputRef.current.style.height = 'auto';
+    }
+
+    // Add User Message
+    setMessages(prev => [...prev, { id: Date.now(), sender: 'user', text: userText }]);
+    setIsLoading(true);
+
+    try {
+      const response = await sendMessageToBot(userText);
+      setMessages(prev => [...prev, { id: Date.now() + 1, sender: 'bot', text: response }]);
+    } catch (error: any) {
+      setMessages(prev => [...prev, { 
+        id: Date.now() + 1, 
+        sender: 'bot', 
+        text: 'متاسفانه ارتباط برقرار نشد. لطفا اتصال اینترنت خود را بررسی کنید.' 
+      }]);
+    } finally {
+      setIsLoading(false);
+      // Refocus input for desktop users
+      if(!('ontouchstart' in window)) {
+        inputRef.current?.focus();
+      }
+    }
   };
 
-  const initialButtons: Button[][] = [
-      [{ text: '📿 فال حافظ', action: () => handleFortuneRequest(FortuneType.Hafez) }],
-      [{ text: '🃏 فال تاروت', action: () => handleFortuneRequest(FortuneType.Tarot) }],
-  ];
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
 
-  const newFortuneButton: Button[][] = [
-      [{ text: '🔮 فال جدید', action: resetChat }]
-  ];
+  const handleInputResize = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInput(e.target.value);
+    // Auto-resize textarea
+    e.target.style.height = 'auto';
+    e.target.style.height = `${Math.min(e.target.scrollHeight, 150)}px`;
+  };
 
   return (
     <div className="chat-container">
       <div className="chat-messages">
         {messages.map(msg => <ChatMessage key={msg.id} message={msg} />)}
-        {isLoading && <ChatMessage message={{ id: 'loader', sender: 'bot', text: <Loader /> }} />}
-        <div ref={messagesEndRef} />
+        
+        {isLoading && (
+          <div className="message-bubble bot-bubble" style={{ width: 'fit-content' }}>
+            <Loader />
+          </div>
+        )}
+        <div ref={messagesEndRef} style={{ height: '10px' }} />
       </div>
-      
-      {showButtons && <InlineKeyboard buttons={initialButtons} disabled={isLoading} />}
-      {!isLoading && !showButtons && <InlineKeyboard buttons={newFortuneButton} disabled={false} />}
+
+      <div className="input-area">
+        <textarea
+          ref={inputRef}
+          value={input}
+          onChange={handleInputResize}
+          onKeyDown={handleKeyDown}
+          placeholder="پیام..."
+          className="chat-input"
+          rows={1}
+          disabled={isLoading}
+        />
+        <button 
+          onClick={() => handleSend()} 
+          className="send-button"
+          disabled={!input.trim() || isLoading}
+        >
+          <SendIcon />
+        </button>
+      </div>
     </div>
   );
 };

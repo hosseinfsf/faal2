@@ -1,5 +1,5 @@
 {
-  "name": "Hafez and Tarot Fortune Bot",
-  "description": "A web application that simulates a Telegram bot for providing Hafez and Tarot readings using AI.",
+  "name": "My Telegram Bot",
+  "description": "A personal AI assistant with a Telegram-style interface.",
   "requestFramePermissions": []
 }
