@@ -1,20 +1,47 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# ربات هوش مصنوعی شخصی (Telegram Style)
 
-# Run and deploy your AI Studio app
+این پروژه یک دستیار هوش مصنوعی هوشمند است که با رابط کاربری شبیه به تلگرام (Telegram) طراحی شده است. این ربات از مدل قدرتمند **Gemini 2.5 Flash** استفاده می‌کند تا تجربه‌ای سریع و روان را ارائه دهد.
 
-This contains everything you need to run your app locally.
+## ویژگی‌ها
 
-View your app in AI Studio: https://ai.studio/apps/drive/17Sq1JBucPtntcMSGdow6Lcc6rEbTwawG
+- 💬 **رابط کاربری آشنا:** طراحی کاملاً شبیه به محیط چت تلگرام (Dark Mode).
+- 🧠 **هوش مصنوعی پیشرفته:** استفاده از آخرین نسخه Google Gemini برای پاسخگویی دقیق و طبیعی.
+- ⚡ **سرعت بالا:** بهینه‌سازی شده برای پاسخگویی سریع (Streaming-like feel).
+- 📱 **واکنش‌گرا:** قابل استفاده در موبایل و دسکتاپ.
 
-## Run Locally
+## پیش‌نیازها
 
-**Prerequisites:**  Node.js
+برای اجرای این پروژه به موارد زیر نیاز دارید:
+- Node.js (نسخه 18 یا بالاتر پیشنهاد می‌شود)
+- کلید API از [Google AI Studio](https://aistudio.google.com/)
 
+## راه‌اندازی
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+1. مخزن را کلون کنید:
+   ```bash
+   git clone <repo-url>
+   ```
+
+2. وابستگی‌ها را نصب کنید:
+   ```bash
+   npm install
+   ```
+
+3. فایل `.env` را در ریشه پروژه بسازید و کلید API خود را وارد کنید:
+   ```env
+   API_KEY=your_gemini_api_key_here
+   ```
+
+4. برنامه را اجرا کنید:
+   ```bash
+   npm start
+   ```
+
+## ساختار پروژه
+
+- `App.tsx`: مدیریت رابط کاربری چت.
+- `services/geminiService.ts`: ارتباط با هوش مصنوعی گوگل.
+- `index.html`: استایل‌های پایه و تنظیمات ظاهری.
+
+---
+توسعه داده شده با ❤️ توسط هوش مصنوعی.
